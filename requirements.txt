@@ -8,3 +8,6 @@ faiss-cpu
 streamlit
 tavily-python
 langchain-tavily
+python-dotenv
+logtail-python
+langchain_experimental

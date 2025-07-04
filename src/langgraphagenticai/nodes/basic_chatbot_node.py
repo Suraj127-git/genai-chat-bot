@@ -1,4 +1,5 @@
 from src.langgraphagenticai.state.state import State
+from src.langgraphagenticai.common.logger import logger
 
 class BasicChatbotNode:
     """
@@ -11,5 +12,6 @@ class BasicChatbotNode:
         """
         Processes the input state and generates a chatbot response.
         """
+        logger.info(f"BasicChatbotNode processing state: {state}")
         return {"messages":self.llm.invoke(state['messages'])}
 

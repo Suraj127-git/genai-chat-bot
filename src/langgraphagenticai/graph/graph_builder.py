@@ -6,7 +6,8 @@ from src.langgraphagenticai.tools.search_tool import get_tools,create_tool_node
 from langgraph.prebuilt import tools_condition,ToolNode
 from src.langgraphagenticai.nodes.chatbot_with_Tool_node import ChatbotWithToolNode
 from src.langgraphagenticai.nodes.ai_news_node import AINewsNode
-
+from src.langgraphagenticai.common.logger import logger
+import traceback
 
 class GraphBuilder:
     def __init__(self,model):
@@ -81,11 +82,23 @@ class GraphBuilder:
         """
         Sets up the graph for the selected use case.
         """
-        if usecase == "Basic Chatbot":
-            self.basic_chatbot_build_graph()
-        if usecase == "Chatbot With Web":
-            self.chatbot_with_tools_build_graph()
-        if usecase == "AI News":
-            self.ai_news_builder_graph()
+        try:
+            logger.info(f"Setting up graph for use case: {usecase}")
+            
+            if usecase == "Basic Chatbot":
+                self.basic_chatbot_build_graph()
+            elif usecase == "Chatbot With Web":
+                self.chatbot_with_tools_build_graph()
+            elif usecase == "AI News":
+                self.ai_news_builder_graph()
+            else:
+                logger.error(f"Invalid use case selected: {usecase}")
+                raise ValueError(f"Invalid use case: {usecase}")
 
-        return self.graph_builder.compile()
+            logger.info("Graph setup completed successfully")
+            return self.graph_builder.compile()
+            
+        except Exception as e:
+            tb = traceback.format_exc()
+            logger.critical(f"Failed to setup graph for {usecase}: {e}\n{tb}")
+            raise

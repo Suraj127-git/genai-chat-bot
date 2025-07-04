@@ -1,8 +1,10 @@
 import streamlit as st
 from src.langgraphagenticai.ui.streamlitui.loadui import LoadStreamlitUI
 from src.langgraphagenticai.LLMS.groqllm import GroqLLM
+from src.langgraphagenticai.LLMS.ollamallm import OllamaLLM
 from src.langgraphagenticai.graph.graph_builder import GraphBuilder
 from src.langgraphagenticai.ui.streamlitui.display_result import DisplayResultStreamlit
+from src.langgraphagenticai.common.logger import logger
 
 def load_langgraph_agenticai_app():
     """
@@ -30,7 +32,11 @@ def load_langgraph_agenticai_app():
     if user_message:
         try:
             ## Configure The LLM's
-            obj_llm_config=GroqLLM(user_contols_input=user_input)
+            logger.info(f"User Input: {user_input}")
+            if user_input.get("selected_llm") == "Ollama":
+                obj_llm_config = OllamaLLM(user_contols_input=user_input)
+            else:
+                obj_llm_config = GroqLLM(user_contols_input=user_input)
             model=obj_llm_config.get_llm_model()
 
             if not model:

@@ -1,5 +1,6 @@
 from tavily import TavilyClient
 from langchain_core.prompts import ChatPromptTemplate
+from src.langgraphagenticai.common.logger import logger
 
 
 class AINewsNode:
@@ -7,6 +8,7 @@ class AINewsNode:
         """
         Initialize the AINewsNode with API keys for Tavily and GROQ.
         """
+        logger.info("Initializing AINewsNode")
         self.tavily = TavilyClient()
         self.llm = llm
         # this is used to capture various steps in this file so that later can be use for steps shown
@@ -22,12 +24,15 @@ class AINewsNode:
         Returns:
             dict: Updated state with 'news_data' key containing fetched news.
         """
-
+        logger.info("Starting news fetch process")
         frequency = state['messages'][0].content.lower()
+        logger.debug(f"Fetching news with frequency: {frequency}")
+        
         self.state['frequency'] = frequency
         time_range_map = {'daily': 'd', 'weekly': 'w', 'monthly': 'm', 'year': 'y'}
         days_map = {'daily': 1, 'weekly': 7, 'monthly': 30, 'year': 366}
 
+        logger.info(f"Querying Tavily API for {frequency} AI news")
         response = self.tavily.search(
             query="Top Artificial Intelligence (AI) technology news India and globally",
             topic="news",
@@ -40,6 +45,7 @@ class AINewsNode:
 
         state['news_data'] = response.get('results', [])
         self.state['news_data'] = state['news_data']
+        logger.info(f"Successfully fetched {len(state['news_data'])} news articles")
         return state
     
 
@@ -53,8 +59,9 @@ class AINewsNode:
         Returns:
             dict: Updated state with 'summary' key containing the summarized news.
         """
-
+        logger.info("Starting news summarization process")
         news_items = self.state['news_data']
+        logger.debug(f"Summarizing {len(news_items)} news articles")
 
         prompt_template = ChatPromptTemplate.from_messages([
             ("system", """Summarize AI news articles into markdown format. For each item include:
@@ -73,17 +80,24 @@ class AINewsNode:
             for item in news_items
         ])
 
+        logger.info("Invoking LLM for news summarization")
         response = self.llm.invoke(prompt_template.format(articles=articles_str))
         state['summary'] = response.content
         self.state['summary'] = state['summary']
+        logger.info("News summarization completed")
         return self.state
     
     def save_result(self,state):
+        logger.info("Starting to save summarized results")
         frequency = self.state['frequency']
         summary = self.state['summary']
         filename = f"./AINews/{frequency}_summary.md"
+        
+        logger.debug(f"Saving summary to file: {filename}")
         with open(filename, 'w') as f:
             f.write(f"# {frequency.capitalize()} AI News Summary\n\n")
             f.write(summary)
+        
         self.state['filename'] = filename
+        logger.info(f"Successfully saved summary to {filename}")
         return self.state
