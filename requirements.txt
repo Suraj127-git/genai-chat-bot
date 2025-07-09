@@ -11,3 +11,14 @@ langchain-tavily
 python-dotenv
 logtail-python
 langchain_experimental
+sentence-transformers
+numpy
+scikit-learn
+scipy
+pandas
+matplotlib
+seaborn
+plotly
+nltk
+spacy
+

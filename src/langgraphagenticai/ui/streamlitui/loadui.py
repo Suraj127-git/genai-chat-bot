@@ -1,75 +1,230 @@
 import streamlit as st
-import os
-
-from src.langgraphagenticai.ui.uiconfigfile import Config
+from typing import Dict, Any, Optional
 from src.langgraphagenticai.common.logger import logger
 
 class LoadStreamlitUI:
+    """
+    Enhanced UI loader with vector database management features
+    """
+    
     def __init__(self):
-        self.config=Config()
-        self.user_controls={}
-
-    def load_streamlit_ui(self):
-        try:
-            logger.info("Initializing Streamlit UI")
-            st.set_page_config(page_title= "🤖 " + self.config.get_page_title(), layout="wide")
-            st.header("🤖 " + self.config.get_page_title())
-            st.session_state.timeframe = ''
+        self.initialize_session_state()
+    
+    def initialize_session_state(self):
+        """Initialize session state variables"""
+        if 'IsFetchButtonClicked' not in st.session_state:
             st.session_state.IsFetchButtonClicked = False
-
-            with st.sidebar:
-                # Get options from config
-                llm_options = self.config.get_llm_options()
-                usecase_options = self.config.get_usecase_options()
-                logger.info("Loaded configuration options successfully")
-
-                # LLM selection
-                self.user_controls["selected_llm"] = st.selectbox("Select LLM", llm_options)
-                logger.info(f"Selected LLM: {self.user_controls['selected_llm']}")
-
-                if self.user_controls["selected_llm"] == 'Groq':
-                    model_options = self.config.get_groq_model_options()
-                    self.user_controls["selected_groq_model"] = st.selectbox("Select Model", model_options)
-                    self.user_controls["GROQ_API_KEY"] = st.session_state["GROQ_API_KEY"]=st.text_input("API Key",type="password")
-                    if not self.user_controls["GROQ_API_KEY"]:
-                        logger.warning("Groq API key not provided")
-                        st.warning("⚠️ Please enter your GROQ API key to proceed. Don't have? refer : https://console.groq.com/keys ")
-
-                if self.user_controls["selected_llm"] == 'Ollama':
-                    model_options = self.config.get_ollama_model_options()
-                    self.user_controls["selected_ollama_model"] = st.selectbox("Select Model", model_options)
-                    self.user_controls["OLLAMA_HOST"] = st.session_state["OLLAMA_HOST"]=st.text_input("Ollama Host", value="http://localhost:11434")
-                    if not self.user_controls["OLLAMA_HOST"]:
-                        logger.warning("Ollama host not provided")
-                        st.warning("⚠️ Please enter your Ollama host address. Default is http://localhost:11434")
-
-                self.user_controls["selected_usecase"]=st.selectbox("Select Usecases",usecase_options)
-                logger.info(f"Selected usecase: {self.user_controls['selected_usecase']}")
-
-                if self.user_controls["selected_usecase"] =="Chatbot With Web" or self.user_controls["selected_usecase"] =="AI News":
-                    os.environ["TAVILY_API_KEY"]=self.user_controls["TAVILY_API_KEY"]=st.session_state["TAVILY_API_KEY"]=st.text_input("TAVILY API KEY",type="password")
-                    if not self.user_controls["TAVILY_API_KEY"]:
-                        logger.warning("Tavily API key not provided")
-                        st.warning("⚠️ Please enter your TAVILY_API_KEY key to proceed. Don't have? refer : https://app.tavily.com/home")
-
-                if self.user_controls['selected_usecase']=="AI News":
-                    st.subheader("📰 AI News Explorer ")
-                    with st.sidebar:
-                        time_frame = st.selectbox(
-                            "📅 Select Time Frame",
-                            ["Daily", "Weekly", "Monthly"],
-                            index=0
-                        )
-                    if st.button("🔍 Fetch Latest AI News", use_container_width=True):
-                        logger.info(f"AI News fetch requested for timeframe: {time_frame}")
-                        st.session_state.IsFetchButtonClicked = True
-                        st.session_state.timeframe = time_frame
-
-            logger.info("UI initialization completed successfully")
-            return self.user_controls
-
-        except Exception as e:
-            error_msg = f"Error initializing UI: {str(e)}"
-            logger.critical(error_msg)
-            st.error(error_msg)
-            return None
+        if 'timeframe' not in st.session_state:
+            st.session_state.timeframe = ""
+        if 'vector_db_enabled' not in st.session_state:
+            st.session_state.vector_db_enabled = True
+    
+    def load_streamlit_ui(self) -> Optional[Dict[str, Any]]:
+        """
+        Load the enhanced Streamlit UI with vector database options
+        """
+        st.title("🤖 LangGraph AgenticAI with Vector Database")
+        st.markdown("---")
+        
+        # Main configuration columns
+        col1, col2, col3 = st.columns([1, 1, 1])
+        
+        with col1:
+            st.subheader("🛠️ LLM Configuration")
+            
+            # LLM Selection
+            selected_llm = st.selectbox(
+                "Select LLM Provider",
+                options=["Groq", "Ollama"],
+                index=0,
+                help="Choose your preferred LLM provider"
+            )
+            
+            # Model Selection based on LLM
+            if selected_llm == "Ollama":
+                selected_model = st.selectbox(
+                    "Select Ollama Model",
+                    options=[
+                        "llama3.2:1b",
+                        "llama3.2:3b", 
+                        "llama3:8b",
+                        "mistral:7b",
+                        "codellama:13b"
+                    ],
+                    index=0,
+                    help="Choose your Ollama model"
+                )
+            else:
+                selected_model = st.selectbox(
+                    "Select Groq Model",
+                    options=[
+                        "llama3-8b-8192",
+                        "llama3-70b-8192",
+                        "mixtral-8x7b-32768",
+                        "gemma-7b-it"
+                    ],
+                    index=0,
+                    help="Choose your Groq model"
+                )
+        
+        with col2:
+            st.subheader("🎯 Use Case Selection")
+            
+            # Use Case Selection
+            selected_usecase = st.selectbox(
+                "Select Use Case",
+                options=[
+                    "Basic Chatbot",
+                    "Chatbot With Web", 
+                    "AI News"
+                ],
+                index=0,
+                help="Choose the functionality you want to use"
+            )
+            
+            # Vector Database Toggle
+            st.session_state.vector_db_enabled = st.checkbox(
+                "Enable Vector Database",
+                value=True,
+                help="Use vector database for caching and similarity search"
+            )
+            
+            # Show use case description
+            use_case_descriptions = {
+                "Basic Chatbot": "💬 Simple chat interface with vector-enhanced responses",
+                "Chatbot With Web": "🌐 Chat with web search capabilities",
+                "AI News": "📰 AI news aggregation and summarization with caching"
+            }
+            
+            st.info(use_case_descriptions.get(selected_usecase, ""))
+        
+        with col3:
+            st.subheader("⚙️ Advanced Settings")
+            
+            # Temperature setting
+            temperature = st.slider(
+                "Temperature",
+                min_value=0.0,
+                max_value=1.0,
+                value=0.7,
+                step=0.1,
+                help="Controls randomness in responses"
+            )
+            
+            # Max tokens
+            max_tokens = st.slider(
+                "Max Tokens",
+                min_value=100,
+                max_value=4000,
+                value=1000,
+                step=100,
+                help="Maximum tokens in response"
+            )
+            
+            # Vector search settings
+            if st.session_state.vector_db_enabled:
+                st.markdown("**Vector Search Settings**")
+                
+                vector_search_limit = st.slider(
+                    "Search Results Limit",
+                    min_value=1,
+                    max_value=10,
+                    value=5,
+                    help="Number of similar questions to retrieve"
+                )
+                
+                similarity_threshold = st.slider(
+                    "Similarity Threshold",
+                    min_value=0.5,
+                    max_value=0.95,
+                    value=0.8,
+                    step=0.05,
+                    help="Minimum similarity to use cached response"
+                )
+        
+        # AI News specific settings
+        if selected_usecase == "AI News":
+            st.markdown("---")
+            st.subheader("📰 AI News Settings")
+            
+            col_news1, col_news2 = st.columns(2)
+            
+            with col_news1:
+                timeframe = st.selectbox(
+                    "Select News Timeframe",
+                    options=[
+                        "last 24 hours",
+                        "last 3 days", 
+                        "last week",
+                        "last month"
+                    ],
+                    index=0,
+                    help="Choose the timeframe for news aggregation"
+                )
+                
+                fetch_button = st.button(
+                    "🔄 Fetch AI News",
+                    help="Fetch and summarize AI news for the selected timeframe"
+                )
+                
+                if fetch_button:
+                    st.session_state.IsFetchButtonClicked = True
+                    st.session_state.timeframe = f"Get AI news from {timeframe}"
+            
+            with col_news2:
+                # News source preferences
+                news_sources = st.multiselect(
+                    "Preferred News Sources",
+                    options=[
+                        "TechCrunch",
+                        "Wired",
+                        "MIT Technology Review",
+                        "VentureBeat",
+                        "The Verge",
+                        "Ars Technica"
+                    ],
+                    default=["TechCrunch", "Wired"],
+                    help="Select preferred news sources"
+                )
+                
+                # Summary length
+                summary_length = st.selectbox(
+                    "Summary Length",
+                    options=["Brief", "Detailed", "Comprehensive"],
+                    index=1,
+                    help="Choose the length of news summaries"
+                )
+        
+        # Compile user input
+        user_input = {
+            "selected_llm": selected_llm,
+            "selected_model": selected_model,
+            "selected_usecase": selected_usecase,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "vector_db_enabled": st.session_state.vector_db_enabled,
+        }
+        
+        # Add model-specific keys
+        if selected_llm == "Ollama":
+            user_input["selected_ollama_model"] = selected_model
+        else:
+            user_input["selected_groq_model"] = selected_model
+        
+        # Add vector search settings if enabled
+        if st.session_state.vector_db_enabled:
+            user_input.update({
+                "vector_search_limit": vector_search_limit,
+                "similarity_threshold": similarity_threshold
+            })
+        
+        # Add AI News specific settings
+        if selected_usecase == "AI News":
+            user_input.update({
+                "timeframe": timeframe,
+                "news_sources": news_sources,
+                "summary_length": summary_length
+            })
+        
+        logger.info(f"UI Configuration: {user_input}")
+        return user_input
