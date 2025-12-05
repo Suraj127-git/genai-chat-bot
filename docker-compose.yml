@@ -1,0 +1,50 @@
+version: "3.9"
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:6333/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      QDRANT_URL: http://qdrant:6333
+      DEFAULT_PROVIDER: Groq
+      DEFAULT_MODEL: llama3-8b-8192
+    depends_on:
+      qdrant:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/AINews:/app/AINews
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_API_URL: http://backend:8000
+
+volumes:
+  qdrant_data:
+    driver: local

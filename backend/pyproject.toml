@@ -1,0 +1,26 @@
+[project]
+name = "genai-chat-bot-backend"
+version = "0.1.0"
+description = "FastAPI backend for Agentic AI chatbot with LangGraph and Qdrant"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic",
+  "langchain",
+  "langgraph",
+  "langchain_groq",
+  "langchain_openai",
+  "langchain_community",
+  "langsmith",
+  "qdrant-client",
+  "tavily-python",
+  "python-dotenv",
+  "logtail-python",
+  "pytest",
+  "httpx"
+]
+
+[tool.uv]
+index-url = "https://pypi.org/simple"

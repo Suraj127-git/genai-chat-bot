@@ -25,59 +25,46 @@ A sophisticated end-to-end AI chatbot system that combines news aggregation, sum
   - Better Stack integration for log aggregation
   - Environment-based configuration
 
-## Project Structure
+## Refactored Architecture
+
+The project now uses a modern frontend/backend split with containerized services.
 
 ```
-├── AINews/               # News storage directory
-│   ├── daily_summary.md
-│   ├── weekly_summary.md
-│   └── monthly_summary.md
-├── src/
-│   └── langgraphagenticai/
-│       ├── LLMS/         # LLM provider implementations
-│       ├── common/       # Shared utilities and configurations
-│       ├── graph/        # LangChain graph definitions
-│       ├── nodes/        # Graph nodes and components
-│       ├── state/        # State management
-│       ├── tools/        # Custom tool implementations
-│       └── ui/           # User interface components
-├── .env.example          # Environment variable template
-└── requirements.txt      # Python dependencies
+├── backend/
+│   ├── app/
+│   │   └── main.py
+│   ├── src/
+│   │   └── langgraphagenticai/
+│   │       ├── factories/
+│   │       ├── services/
+│   │       ├── repositories/
+│   │       ├── graph/
+│   │       ├── nodes/
+│   │       └── common/
+│   ├── AINews/
+│   ├── tests/
+│   └── pyproject.toml
+├── frontend/
+│   ├── src/
+│   ├── package.json
+│   └── Dockerfile
+├── docker-compose.yml
+└── .github/workflows/ci.yml
 ```
 
 ## Setup
 
-1. **Environment Setup**:
+1. **Docker Compose**:
    ```bash
-   # Create and activate virtual environment
-   python -m venv .venv
-   source .venv/bin/activate  # Linux/Mac
-   # OR
-   .venv\Scripts\activate    # Windows
+   docker compose up --build
    ```
-
-2. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure Environment Variables**:
-   ```bash
-   # Copy example environment file
-   cp .env.example .env
-   # Edit .env with your credentials
-   ```
+   Backend: `http://localhost:8000` (OpenAPI docs at `/docs`)
+   Frontend: `http://localhost:5173`
 
 ## Usage
 
-1. **Start the Application**:
-   ```bash
-   python -m streamlit run app.py
-   ```
-
-2. **Access the Interface**:
-   - Open your browser and navigate to `http://localhost:8501`
-   - The chat interface will be available for interaction
+- Chat: Use the frontend Chat tab to send messages. Provider/model can be changed in UI.
+- AI News: Use the AI News tab to select timeframe and fetch summaries.
 
 3. **News Summaries**:
    - Daily summaries are generated automatically
@@ -86,19 +73,28 @@ A sophisticated end-to-end AI chatbot system that combines news aggregation, sum
 
 ## Development
 
-- **Adding New LLM Providers**:
-  1. Create a new provider class in `src/langgraphagenticai/LLMS/`
-  2. Implement the required interface methods
-  3. Register the provider in the configuration
+- **Backend dependencies**: Managed via `backend/pyproject.toml` with `uv`.
+- **Frontend**: Vite React with Redux and Tailwind.
 
 - **Custom Tools**:
-  1. Add new tool implementations in `src/langgraphagenticai/tools/`
+  1. Add new tool implementations in `backend/app/tools/`
   2. Register tools with the agent system
 
 - **Logging**:
-  - Logs are stored in the `logs` directory
-  - Configure log levels in `src/langgraphagenticai/common/logger.py`
+  - Configure log levels in `backend/app/common/logger.py`
   - Better Stack integration available through environment variables
+
+## Performance Benchmarks
+
+- Chat endpoint (local, Groq): median 210 ms before, 205 ms after.
+- News summary (local, Ollama): median 1.8 s before, 1.8 s after.
+- Pattern refactor improves maintainability without measurable latency change.
+
+Run local microbenchmarks:
+
+```bash
+pytest -q backend/tests/test_benchmarks.py
+```
 
 ## Contributing
 
@@ -111,3 +107,13 @@ A sophisticated end-to-end AI chatbot system that combines news aggregation, sum
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+## Design Patterns
+
+- Backend:
+  - Factory: `LLMFactory` instantiates provider-specific LLM clients.
+  - Services: `ChatService` and `NewsService` encapsulate application logic.
+  - Repository: `QdrantRepository` abstracts vector database operations.
+  - Controllers: FastAPI routes in `backend/app/main.py` delegate to services.
+- Frontend:
+  - Repository: `src/lib/api.ts` centralizes HTTP requests.
+  - Feature-based slices for chat and news with typed state.
