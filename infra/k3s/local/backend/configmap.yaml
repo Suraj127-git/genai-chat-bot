@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: medical-backend
+data:
+  # Local MongoDB connection
+  MONGODB_URL: "mongodb://mongodb-service:27017"
+  MONGODB_DB_NAME: "medical_chatbot"
+  
+  # Local ChromaDB connection
+  CHROMA_HOST: "chromadb-service"
+  CHROMA_PORT: "8000"
+  
+  # Application settings
+  LOG_LEVEL: "DEBUG"
+  ENVIRONMENT: "development"
+  DEBUG: "True"
+  
+  # CORS settings for local development
+  ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8080"
+  
+  # File upload limits
+  MAX_UPLOAD_SIZE_MB: "50"
+  ALLOWED_FILE_TYPES: "pdf,txt,doc,docx"

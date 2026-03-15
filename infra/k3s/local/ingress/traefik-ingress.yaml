@@ -1,0 +1,31 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: medical-chatbot-ingress
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    # Frontend routes
+    - match: Host(`localhost`)
+      kind: Rule
+      services:
+        - name: frontend-service
+          namespace: medical-frontend
+          port: 80
+      middlewares:
+        - name: headers-middleware
+        - name: cors-middleware
+    
+    # Backend API routes
+    - match: Host(`localhost`) && PathPrefix(`/api/v1`)
+      kind: Rule
+      services:
+        - name: backend-service
+          namespace: medical-backend
+          port: 8000
+      middlewares:
+        - name: headers-middleware
+        - name: cors-middleware
+        - name: ratelimit-middleware

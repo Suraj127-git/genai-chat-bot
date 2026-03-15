@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: medical-backend
+  labels:
+    app: medical-chatbot
+    tier: backend
+    environment: production
