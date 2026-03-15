@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { FileText, Trash2, Eye } from 'lucide-react';
+import { FileText, Trash2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchDocuments, deleteDocument } from './documentsSlice';
 import { formatDate, formatFileSize } from '@/utils/helpers';

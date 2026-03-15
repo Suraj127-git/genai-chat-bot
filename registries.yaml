@@ -1,0 +1,10 @@
+mirrors:
+  "host.docker.internal:5000":
+    endpoint:
+      - "http://host.docker.internal:5000"
+  "192.168.107.4:5000":
+    endpoint:
+      - "http://192.168.107.4:5000"
+  "registry:5000":
+    endpoint:
+      - "http://registry:5000"

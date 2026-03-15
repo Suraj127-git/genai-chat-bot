@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: ghcr.io/your-org/medical-chatbot-frontend:latest
-        imagePullPolicy: Always
+        image: medical-frontend:latest
+        imagePullPolicy: Never
         ports:
         - name: http
           containerPort: 80
