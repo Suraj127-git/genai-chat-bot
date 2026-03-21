@@ -11,7 +11,7 @@ from app.models.clinical_decision import (
 )
 from app.chains.clinical_chain import ClinicalChain
 from app.db.chromadb import ChromaDBManager
-from app.services.document_service import DocumentService
+from langchain_community.embeddings import HuggingFaceEmbeddings
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,9 @@ class ClinicalService:
         self.documents_collection = db["documents"]
         self.chroma_client = ChromaDBManager.get_client()
         self.clinical_chain = ClinicalChain()
+        self.embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
     
     async def generate_decision(self, query: ClinicalQuery, user_id: str) -> ClinicalDecision:
         """
@@ -113,21 +116,27 @@ class ClinicalService:
         collection_name = f"user_{user_id}_documents"
         
         try:
-            collection = self.chroma_client.get_or_create_collection(name=collection_name)
+            collection = self.chroma_client.get_or_create_collection(
+                name=collection_name,
+                embedding_function=None
+            )
         except Exception as e:
             logger.warning(f"Could not access ChromaDB collection: {e}")
             return []
-        
+
         # Build filter for specific documents if provided
         where_filter = None
         if document_ids:
             where_filter = {"document_id": {"$in": document_ids}}
-        
+
+        # Embed query locally to avoid ChromaDB downloading its ONNX model
+        query_embedding = self.embeddings.embed_query(query)
+
         # Query ChromaDB for relevant chunks
         try:
             results = collection.query(
-                query_texts=[query],
-                n_results=10,  # Top 10 most relevant chunks
+                query_embeddings=[query_embedding],
+                n_results=10,
                 where=where_filter
             )
             

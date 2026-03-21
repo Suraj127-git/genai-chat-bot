@@ -15,7 +15,7 @@ class ClinicalChain:
         """Initialize the clinical decision chain."""
         self.llm = ChatGroq(
             api_key=settings.GROQ_API_KEY,
-            model="mixtral-8x7b-32768",
+            model=settings.GROQ_DEFAULT_MODEL,
             temperature=0.3,  # Lower temperature for more consistent medical advice
             max_tokens=4096
         )

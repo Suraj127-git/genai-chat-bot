@@ -56,7 +56,7 @@ class ChromaDBManager:
             Collection instance
         """
         client = cls.get_client()
-        return client.get_or_create_collection(name=collection_name)
+        return client.get_or_create_collection(name=collection_name, embedding_function=None)
 
 
 # Convenience function for dependency injection

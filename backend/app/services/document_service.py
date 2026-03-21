@@ -148,14 +148,19 @@ class DocumentService:
         
         # Create embeddings and store in ChromaDB
         collection_name = f"user_{user_id}_documents"
-        collection = self.chroma_client.get_or_create_collection(name=collection_name)
+        collection = self.chroma_client.get_or_create_collection(
+            name=collection_name,
+            embedding_function=None
+        )
         
         # Generate chunk IDs
         chunk_ids = [f"{document_id}_chunk_{i}" for i in range(len(chunks))]
         
-        # Add to ChromaDB
+        # Generate embeddings locally and add to ChromaDB
+        embeddings = self.embeddings.embed_documents(chunks)
         collection.add(
             documents=chunks,
+            embeddings=embeddings,
             ids=chunk_ids,
             metadatas=[
                 {
@@ -317,7 +322,7 @@ class DocumentService:
         if doc.get("chunk_ids"):
             try:
                 collection_name = f"user_{user_id}_documents"
-                collection = self.chroma_client.get_or_create_collection(name=collection_name)
+                collection = self.chroma_client.get_or_create_collection(name=collection_name, embedding_function=None)
                 collection.delete(ids=doc["chunk_ids"])
             except Exception as e:
                 logger.warning(f"Could not delete ChromaDB chunks: {e}")

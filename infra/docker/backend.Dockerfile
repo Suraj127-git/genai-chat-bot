@@ -37,6 +37,9 @@ COPY app/ ./app/
 # Create directory for ChromaDB persistence
 RUN mkdir -p /app/chroma_data
 
+# Pre-download ChromaDB ONNX model to avoid runtime download delays
+RUN python -c "from chromadb.utils.embedding_functions import DefaultEmbeddingFunction; ef = DefaultEmbeddingFunction(); ef(['warmup'])"
+
 # Expose port
 EXPOSE 8000
 

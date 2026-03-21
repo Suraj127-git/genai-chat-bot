@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     
     # AI APIs
     GROQ_API_KEY: str
+    GROQ_DEFAULT_MODEL: str = "llama-3.3-70b-versatile"
     
     # Security
     SECRET_KEY: str
